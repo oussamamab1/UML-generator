@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantUML Diagramm Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/plantuml-encoder@1.4.0/dist/plantuml-encoder.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            gap: 0;
+            height: 85vh;
+        }
+
+        .input-panel {
+            background: #f8fafc;
+            padding: 30px;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .diagram-type-selector {
+            margin-bottom: 20px;
+        }
+
+        .diagram-type-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .diagram-type-selector select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .diagram-type-selector select:focus {
+            outline: none;
+            border-color: #43e97b;
+        }
+
+        .api-selector {
+            margin-bottom: 20px;
+        }
+
+        .api-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .api-selector select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .api-selector select:focus {
+            outline: none;
+            border-color: #43e97b;
+        }
+
+        .api-key-input {
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .api-key-input label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .api-key-input input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .api-key-input input:focus {
+            outline: none;
+            border-color: #43e97b;
+        }
+
+        .api-key-input small {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .input-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .description-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: none;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .description-input:focus {
+            outline: none;
+            border-color: #43e97b;
+        }
+
+        .generate-btn {
+            margin-top: 20px;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .viewer-panel {
+            background: white;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: white;
+            border-bottom-color: #43e97b;
+            color: #43e97b;
+        }
+
+        .tab:hover {
+            background: #e2e8f0;
+        }
+
+        .tab-content {
+            flex: 1;
+            position: relative;
+        }
+
+        .tab-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        #diagram-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+            background: #fafafa;
+        }
+
+        #diagram-image {
+            max-width: 100%;
+            max-height: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        #code-editor {
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            border: none;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            resize: none;
+            outline: none;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #64748b;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #43e97b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .control-btn {
+            padding: 10px 15px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .control-btn:hover {
+            background: #f8fafc;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #dc2626;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #16a34a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #16a34a;
+        }
+
+        .welcome-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #64748b;
+            font-size: 18px;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+                height: auto;
+                min-height: 85vh;
+            }
+            
+            .viewer-panel {
+                min-height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 PlantUML Diagramm Generator</h1>
+            <p>Beschreibe dein System oder deinen Prozess und erhalte automatisch ein UML-Diagramm mit KI</p>
+        </div>
+        
+        <div class="content">
+            <div class="input-panel">
+                <div class="diagram-type-selector">
+                    <label for="diagramType">Diagramm-Typ wählen:</label>
+                    <select id="diagramType" onchange="updatePlaceholder()">
+                        <option value="class">Klassendiagramm</option>
+                        <option value="sequence">Sequenzdiagramm</option>
+                        <option value="usecase">Use Case Diagramm</option>
+                        <option value="activity">Aktivitätsdiagramm</option>
+                        <option value="component">Komponentendiagramm</option>
+                        <option value="deployment">Deployment-Diagramm</option>
+                        <option value="state">Zustandsdiagramm</option>
+                        <option value="er">Entity-Relationship Diagramm</option>
+                    </select>
+                </div>
+
+                <div class="api-selector">
+                    <label for="aiProvider">KI-Provider wählen:</label>
+                    <select id="aiProvider" onchange="toggleApiKeyInput()">
+                        <option value="demo">Demo (Lokales Beispiel)</option>
+                        <option value="mistral">Mistral AI</option>
+                    </select>
+                </div>
+
+                <div id="apiKeySection" class="api-key-input">
+                    <label for="apiKey">Mistral AI API Key:</label>
+                    <input type="password" id="apiKey" placeholder="Gib deinen Mistral AI API-Key hier ein...">
+                    <small>Dein API-Key wird nur für diese Session gespeichert. Erhältlich unter: <a href="https://console.mistral.ai/" target="_blank">console.mistral.ai</a></small>
+                </div>
+
+                <div class="input-group">
+                    <label for="systemDescription">System/Prozess-Beschreibung:</label>
+                    <textarea 
+                        id="systemDescription" 
+                        class="description-input" 
+                        placeholder="Beschreibe dein System oder deinen Prozess hier..."
+                    ></textarea>
+                </div>
+
+                <button id="generateBtn" class="generate-btn">
+                    🎨 PlantUML Diagramm generieren
+                </button>
+
+                <div id="messageContainer"></div>
+            </div>
+
+            <div class="viewer-panel">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('visual')">📊 Visuell</div>
+                    <div class="tab" onclick="switchTab('code')">💻 PlantUML Code</div>
+                </div>
+                
+                <div class="tab-content">
+                    <div id="visualTab" class="tab-panel active">
+                        <div class="controls">
+                            <button class="control-btn" onclick="downloadPNG()">🖼️ PNG</button>
+                            <button class="control-btn" onclick="downloadSVG()">📄 SVG</button>
+                            <button class="control-btn" onclick="downloadCode()">💾 PlantUML</button>
+                            <button class="control-btn" onclick="copyToClipboard()">📋 Kopieren</button>
+                        </div>
+                        
+                        <div id="loading" class="loading" style="display: none;">
+                            <div class="spinner"></div>
+                            <p>Generiere PlantUML-Diagramm...</p>
+                        </div>
+                        
+                        <div id="welcomeMessage" class="welcome-message">
+                            <p>👋 Willkommen! Wähle einen Diagramm-Typ und beschreibe dein System</p>
+                        </div>
+                        
+                        <div id="diagram-container">
+                            <img id="diagram-image" style="display: none;" alt="PlantUML Diagramm" />
+                        </div>
+                    </div>
+                    
+                    <div id="codeTab" class="tab-panel">
+                        <textarea id="code-editor" placeholder="Hier wird der generierte PlantUML Code angezeigt..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPlantUMLCode = '';
+        let currentDiagramUrl = '';
+
+        // Tab-Switching
+        function switchTab(tabName) {
+            // Tab-Buttons aktualisieren
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Tab-Panels aktualisieren
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // Placeholder basierend auf Diagramm-Typ aktualisieren
+        function updatePlaceholder() {
+            const diagramType = document.getElementById('diagramType').value;
+            const textarea = document.getElementById('systemDescription');
+            
+            const placeholders = {
+                'class': `📚 Beispiel Klassendiagramm:
+
+Erstelle ein E-Commerce System mit folgenden Klassen:
+- User: hat name, email, password und Methoden login(), logout()
+- Product: hat id, name, price, description
+- Order: hat orderDate, status, totalAmount und Methoden addItem(), removeItem(), calculateTotal()
+- ShoppingCart: hat items und Methoden addProduct(), removeProduct(), checkout()
+- Payment: hat amount, paymentMethod und Methode processPayment()
+
+User kann mehrere Orders haben, Order enthält mehrere Products, ShoppingCart gehört zu einem User.`,
+
+                'sequence': `🔄 Beispiel Sequenzdiagramm:
+
+Beschreibe den Login-Prozess:
+1. User gibt Benutzername und Passwort ein
+2. Frontend sendet Anfrage an Authentication Service
+3. Authentication Service prüft Daten in der Datenbank
+4. Bei gültigen Daten: Token wird generiert und zurückgesendet
+5. Frontend speichert Token und leitet zur Dashboard weiter
+6. Bei ungültigen Daten: Fehlermeldung wird angezeigt`,
+
+                'usecase': `👥 Beispiel Use Case Diagramm:
+
+Online Banking System:
+Akteure: Kunde, Bank-Mitarbeiter, System-Admin
+
+Use Cases für Kunde:
+- Anmelden
+- Kontostand abfragen
+- Überweisung tätigen
+- Transaktionshistorie einsehen
+- Logout
+
+Use Cases für Bank-Mitarbeiter:
+- Kundenkonten verwalten
+- Transaktionen überwachen
+- Berichte generieren
+
+Use Cases für System-Admin:
+- Benutzer verwalten
+- System konfigurieren
+- Backups erstellen`,
+
+                'activity': `⚡ Beispiel Aktivitätsdiagramm:
+
+Bestellprozess in einem Online-Shop:
+1. Start: Kunde besucht Website
+2. Produkte durchsuchen
+3. Artikel in Warenkorb legen
+4. Zur Kasse gehen
+5. Entscheidung: Angemeldet? 
+   - Nein: Registrierung oder Gast-Checkout
+   - Ja: Weiter zu Adressdaten
+6. Lieferadresse eingeben
+7. Zahlungsmethode wählen
+8. Bestellung bestätigen
+9. Zahlung verarbeiten
+10. Entscheidung: Zahlung erfolgreich?
+    - Nein: Zurück zu Zahlungsmethode
+    - Ja: Bestellbestätigung senden
+11. Ende: Bestellung abgeschlossen`,
+
+                'component': `🔧 Beispiel Komponentendiagramm:
+
+Microservices E-Commerce Architektur:
+- Frontend (React App)
+- API Gateway
+- User Service (Benutzerverwaltung)
+- Product Service (Produktkatalog)
+- Order Service (Bestellungen)
+- Payment Service (Zahlungen)
+- Notification Service (E-Mails/SMS)
+- Database (PostgreSQL)
+- Cache (Redis)
+- Message Queue (RabbitMQ)
+
+Frontend kommuniziert über API Gateway mit Services, Services nutzen Message Queue für asynchrone Kommunikation.`,
+
+                'deployment': `🚀 Beispiel Deployment-Diagramm:
+
+Cloud-Deployment einer Web-Anwendung:
+- Load Balancer (AWS ALB)
+- Web Server (2x EC2 Instanzen mit Nginx)
+- Application Server (3x EC2 Instanzen mit Docker)
+- Database Server (RDS PostgreSQL mit Read-Replica)
+- Cache Server (ElastiCache Redis Cluster)
+- File Storage (S3 Buckets)
+- CDN (CloudFront)
+
+Beschreibe die Verbindungen und Ports zwischen den Komponenten.`,
+
+                'state': `🔄 Beispiel Zustandsdiagramm:
+
+Zustandsdiagramm für eine Bestellung:
+- Initial: Warenkorb
+- Created: Bestellung erstellt
+- Confirmed: Bestellung bestätigt
+- Paid: Bezahlt
+- Shipped: Versendet
+- Delivered: Zugestellt
+- Cancelled: Storniert
+- Returned: Zurückgesendet
+
+Übergänge: Warenkorb → Created (bei Checkout), Created → Confirmed (bei Bestätigung), etc.`,
+
+                'er': `🗃️ Beispiel Entity-Relationship Diagramm:
+
+Bibliothekssystem:
+Entitäten:
+- User (UserID, Name, Email, MembershipDate)
+- Book (BookID, Title, Author, ISBN, PublishedYear)
+- Author (AuthorID, Name, BirthDate, Nationality)
+- Loan (LoanID, LoanDate, ReturnDate, Status)
+- Category (CategoryID, CategoryName)
+
+Beziehungen:
+- User kann mehrere Books ausleihen (1:n über Loan)
+- Book gehört zu einer Category (n:1)
+- Book hat einen oder mehrere Authors (n:m)
+- Author schreibt mehrere Books (1:n)`
+            };
+            
+            textarea.placeholder = placeholders[diagramType] || 'Beschreibe dein System oder deinen Prozess hier...';
+            
+            // Bei Demo: Beispieltext setzen
+            if (document.getElementById('aiProvider').value === 'demo') {
+                textarea.value = placeholders[diagramType] || '';
+            }
+        }
+
+        // API Key Input ein-/ausblenden
+        function toggleApiKeyInput() {
+            const provider = document.getElementById('aiProvider').value;
+            const apiKeySection = document.getElementById('apiKeySection');
+            const description = document.getElementById('systemDescription');
+            
+            if (provider === 'demo') {
+                apiKeySection.style.display = 'none';
+                updatePlaceholder(); // Demo-Text setzen
+            } else {
+                apiKeySection.style.display = 'block';
+                if (description.value.includes('📚 Beispiel') || description.value.includes('🔄 Beispiel')) {
+                    description.value = "";
+                }
+            }
+        }
+
+        // Demo PlantUML Code basierend auf Diagramm-Typ
+        function getDemoPlantUML(diagramType) {
+            const demos = {
+                'class': `@startuml
+!define RECTANGLE class
+
+class User {
+  -String name
+  -String email
+  -String password
+  +login(): boolean
+  +logout(): void
+}
+
+class Product {
+  -int id
+  -String name
+  -double price
+  -String description
+}
+
+class Order {
+  -Date orderDate
+  -String status
+  -double totalAmount
+  +addItem(Product): void
+  +removeItem(Product): void
+  +calculateTotal(): double
+}
+
+class ShoppingCart {
+  -List<Product> items
+  +addProduct(Product): void
+  +removeProduct(Product): void
+  +checkout(): Order
+}
+
+class Payment {
+  -double amount
+  -String paymentMethod
+  +processPayment(): boolean
+}
+
+User ||--o{ Order : "places"
+Order ||--o{ Product : "contains"
+User ||--|| ShoppingCart : "has"
+Order ||--|| Payment : "requires"
+
+@enduml`,
+
+                'sequence': `@startuml
+actor User
+participant Frontend
+participant "Authentication\\nService" as Auth
+database Database
+
+User -> Frontend: Benutzername & Passwort eingeben
+Frontend -> Auth: Login-Anfrage senden
+Auth -> Database: Benutzerdaten prüfen
+Database -> Auth: Validierungsergebnis
+
+alt Gültige Daten
+    Auth -> Auth: Token generieren
+    Auth -> Frontend: Token zurücksenden
+    Frontend -> Frontend: Token speichern
+    Frontend -> User: Weiterleitung zum Dashboard
+else Ungültige Daten
+    Auth -> Frontend: Fehlermeldung senden
+    Frontend -> User: Fehlermeldung anzeigen
+end
+
+@enduml`,
+
+                'usecase': `@startuml
+left to right direction
+
+actor Kunde
+actor "Bank-Mitarbeiter" as Mitarbeiter
+actor "System-Admin" as Admin
+
+rectangle "Online Banking System" {
+  usecase "Anmelden" as UC1
+  usecase "Kontostand abfragen" as UC2
+  usecase "Überweisung tätigen" as UC3
+  usecase "Transaktionshistorie" as UC4
+  usecase "Logout" as UC5
+  
+  usecase "Kundenkonten verwalten" as UC6
+  usecase "Transaktionen überwachen" as UC7
+  usecase "Berichte generieren" as UC8
+  
+  usecase "Benutzer verwalten" as UC9
+  usecase "System konfigurieren" as UC10
+  usecase "Backups erstellen" as UC11
+}
+
+Kunde --> UC1
+Kunde --> UC2
+Kunde --> UC3
+Kunde --> UC4
+Kunde --> UC5
+
+Mitarbeiter --> UC6
+Mitarbeiter --> UC7
+Mitarbeiter --> UC8
+
+Admin --> UC9
+Admin --> UC10
+Admin --> UC11
+
+@enduml`,
+
+                'activity': `@startuml
+start
+
+:Kunde besucht Website;
+:Produkte durchsuchen;
+:Artikel in Warenkorb legen;
+:Zur Kasse gehen;
+
+if (Angemeldet?) then (nein)
+  :Registrierung oder\\nGast-Checkout;
+else (ja)
+endif
+
+:Lieferadresse eingeben;
+:Zahlungsmethode wählen;
+:Bestellung bestätigen;
+:Zahlung verarbeiten;
+
+if (Zahlung erfolgreich?) then (nein)
+  :Zurück zu Zahlungsmethode;
+  stop
+else (ja)
+  :Bestellbestätigung senden;
+endif
+
+:Bestellung abgeschlossen;
+stop
+
+@enduml`,
+
+                'component': `@startuml
+!include <c4/C4_Component>
+
+Container_Boundary(web, "Web Application") {
+    Component(frontend, "Frontend", "React App", "Benutzeroberfläche")
+    Component(gateway, "API Gateway", "Kong/Nginx", "Routing und Load Balancing")
+}
+
+Container_Boundary(services, "Microservices") {
+    Component(userService, "User Service", "Node.js", "Benutzerverwaltung")
+    Component(productService, "Product Service", "Java", "Produktkatalog")
+    Component(orderService, "Order Service", "Python", "Bestellungen")
+    Component(paymentService, "Payment Service", "Go", "Zahlungen")
+    Component(notificationService, "Notification Service", "Node.js", "E-Mails/SMS")
+}
+
+Container_Boundary(data, "Data Layer") {
+    ComponentDb(database, "Database", "PostgreSQL", "Persistente Daten")
+    ComponentDb(cache, "Cache", "Redis", "Session & Cache")
+    ComponentQueue(queue, "Message Queue", "RabbitMQ", "Async Communication")
+}
+
+Rel(frontend, gateway, "HTTPS")
+Rel(gateway, userService, "REST API")
+Rel(gateway, productService, "REST API")
+Rel(gateway, orderService, "REST API")
+Rel(gateway, paymentService, "REST API")
+
+Rel(userService, database, "SQL")
+Rel(productService, database, "SQL")
+Rel(orderService, database, "SQL")
+Rel(paymentService, database, "SQL")
+
+Rel(userService, cache, "Redis Protocol")
+Rel(orderService, queue, "AMQP")
+Rel(notificationService, queue, "AMQP")
+
+@enduml`,
+
+                'deployment': `@startuml
+!include <aws/common>
+!include <aws/Storage/AmazonS3/AmazonS3>
+!include <aws/Database/AmazonRDS/AmazonRDS>
+!include <aws/Compute/AmazonEC2/AmazonEC2>
+
+node "AWS Cloud" {
+    node "Load Balancer" as lb <<ALB>>
+    
+    node "Web Tier" {
+        node "Web Server 1" as web1 <<EC2 + Nginx>>
+        node "Web Server 2" as web2 <<EC2 + Nginx>>
+    }
+    
+    node "Application Tier" {
+        node "App Server 1" as app1 <<EC2 + Docker>>
+        node "App Server 2" as app2 <<EC2 + Docker>>
+        node "App Server 3" as app3 <<EC2 + Docker>>
+    }
+    
+    node "Data Tier" {
+        database "Primary DB" as db1 <<RDS PostgreSQL>>
+        database "Read Replica" as db2 <<RDS PostgreSQL>>
+        database "Cache" as cache <<ElastiCache Redis>>
+    }
+    
+    cloud "CDN" as cdn <<CloudFront>>
+    storage "File Storage" as s3 <<S3 Buckets>>
+}
+
+[Users] --> cdn : HTTPS/443
+cdn --> lb : HTTPS/443
+lb --> web1 : HTTP/80
+lb --> web2 : HTTP/80
+web1 --> app1 : HTTP/8080
+web1 --> app2 : HTTP/8080
+web2 --> app2 : HTTP/8080
+web2 --> app3 : HTTP/8080
+app1 --> db1 : PostgreSQL/5432
+app2 --> db1 : PostgreSQL/5432
+app3 --> db1 : PostgreSQL/5432
+app1 --> db2 : PostgreSQL/5432
+app2 --> db2 : PostgreSQL/5432
+app3 --> db2 : PostgreSQL/5432
+app1 --> cache : Redis/6379
+app2 --> cache : Redis/6379
+app3 --> cache : Redis/6379
+app1 --> s3 : HTTPS/443
+app2 --> s3 : HTTPS/443
+app3 --> s3 : HTTPS/443
+
+@enduml`,
+
+                'state': `@startuml
+[*] --> Warenkorb
+
+Warenkorb : Artikel sammeln
+Warenkorb --> Created : checkout()
+
+Created : Bestellung erstellt
+Created --> Confirmed : confirm()
+Created --> Cancelled : cancel()
+
+Confirmed : Bestellung bestätigt
+Confirmed --> Paid : payment_received()
+Confirmed --> Cancelled : cancel()
+
+Paid : Bezahlt
+Paid --> Shipped : ship()
+
+Shipped : Versendet
+Shipped --> Delivered : deliver()
+Shipped --> Returned : return()
+
+Delivered : Zugestellt
+Delivered --> Returned : return()
+Delivered --> [*]
+
+Cancelled : Storniert
+Cancelled --> [*]
+
+Returned : Zurückgesendet
+Returned --> [*]
+
+@enduml`,
+
+                'er': `@startuml
+!define Table(name,desc) class name as "desc" << (T,#FFAAAA) >>
+!define primary_key(x) <u>x</u>
+!define foreign_key(x) <i>x</i>
+
+Table(User, "User") {
+  primary_key(UserID) : INT
+  Name : VARCHAR(100)
+  Email : VARCHAR(100)
+  MembershipDate : DATE
+}
+
+Table(Book, "Book") {
+  primary_key(BookID) : INT
+  Title : VARCHAR(200)
+  ISBN : VARCHAR(20)
+  PublishedYear : INT
+  foreign_key(CategoryID) : INT
+}
+
+Table(Author, "Author") {
+  primary_key(AuthorID) : INT
+  Name : VARCHAR(100)
+  BirthDate : DATE
+  Nationality : VARCHAR(50)
+}
+
+Table(Loan, "Loan") {
+  primary_key(LoanID) : INT
+  foreign_key(UserID) : INT
+  foreign_key(BookID) : INT
+  LoanDate : DATE
+  ReturnDate : DATE
+  Status : VARCHAR(20)
+}
+
+Table(Category, "Category") {
+  primary_key(CategoryID) : INT
+  CategoryName : VARCHAR(50)
+}
+
+Table(BookAuthor, "BookAuthor") {
+  foreign_key(BookID) : INT
+  foreign_key(AuthorID) : INT
+}
+
+User ||--o{ Loan : "borrows"
+Book ||--o{ Loan : "is borrowed"
+Book }o--|| Category : "belongs to"
+Book ||--o{ BookAuthor : ""
+Author ||--o{ BookAuthor : ""
+
+@enduml`
+            };
+            
+            return demos[diagramType] || demos['class'];
+        }
+
+        // PlantUML Code zu URL für PlantUML Server konvertieren
+        function plantumlToUrl(plantumlCode) {
+            try {
+                const encoded = plantumlEncoder.encode(plantumlCode);
+                return `https://www.plantuml.com/plantuml/svg/${encoded}`;
+            } catch (error) {
+                console.error('Fehler beim Kodieren:', error);
+                return null;
+            }
+        }
+
+        // Mistral AI API aufrufen
+        async function callMistralAI(description, diagramType, apiKey) {
+            const diagramPrompts = {
+                'class': 'ein UML-Klassendiagramm mit Klassen, Attributen, Methoden und Beziehungen',
+                'sequence': 'ein UML-Sequenzdiagramm mit Akteuren, Nachrichten und Lebenslinien',
+                'usecase': 'ein Use Case Diagramm mit Akteuren, Use Cases und Beziehungen',
+                'activity': 'ein UML-Aktivitätsdiagramm mit Start, Aktionen, Entscheidungen und Ende',
+                'component': 'ein UML-Komponentendiagramm mit Komponenten und deren Abhängigkeiten',
+                'deployment': 'ein UML-Deployment-Diagramm mit Knoten, Komponenten und Verbindungen',
+                'state': 'ein UML-Zustandsdiagramm mit Zuständen und Übergängen',
+                'er': 'ein Entity-Relationship-Diagramm mit Entitäten, Attributen und Beziehungen'
+            };
+
+            const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: 'mistral-large-latest',
+                    messages: [{
+                        role: 'system',
+                        content: `Du bist ein Experte für PlantUML und UML-Diagramme. Du generierst ausschließlich validen PlantUML-Code.
+
+WICHTIGE REGELN:
+1. Beginne IMMER mit @startuml
+2. Ende IMMER mit @enduml
+3. Verwende korrekte PlantUML-Syntax
+4. Keine Erklärungen, nur PlantUML-Code
+5. Deutsche Labels und Namen verwenden
+6. Verwende sinnvolle Beziehungen und Strukturen`
+                    }, {
+                        role: 'user',
+                        content: `Erstelle ${diagramPrompts[diagramType]} in PlantUML für folgende Beschreibung:
+
+${description}
+
+**Anforderungen:**
+- Vollständiger PlantUML-Code von @startuml bis @enduml
+- Deutsche Bezeichnungen verwenden
+- Sinnvolle Struktur und Beziehungen
+- Korrekte PlantUML-Syntax für ${diagramType} Diagramme
+
+**Ausgabe:** Nur der PlantUML-Code, keine Erklärungen, keine Markdown-Blöcke.`
+                    }],
+                    max_tokens: 4000,
+                    temperature: 0.1
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(`Mistral AI API Fehler: ${error.message || response.statusText}`);
+            }
+
+            const data = await response.json();
+            let plantumlCode = data.choices[0].message.content.trim();
+            
+            // PlantUML Code bereinigen
+            plantumlCode = plantumlCode.replace(/```plantuml\n?/g, '');
+            plantumlCode = plantumlCode.replace(/```\n?/g, '');
+            plantumlCode = plantumlCode.replace(/^plantuml\n/g, '');
+            
+            // Sicherstellen, dass @startuml und @enduml vorhanden sind
+            if (!plantumlCode.includes('@startuml')) {
+                plantumlCode = '@startuml\n' + plantumlCode;
+            }
+            if (!plantumlCode.includes('@enduml')) {
+                plantumlCode = plantumlCode + '\n@enduml';
+            }
+            
+            return plantumlCode.trim();
+        }
+
+        // KI API aufrufen
+        async function callAI(provider, description, diagramType, apiKey) {
+            if (provider === 'demo') {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                return getDemoPlantUML(diagramType);
+            }
+            
+            if (provider === 'mistral') {
+                return await callMistralAI(description, diagramType, apiKey);
+            }
+            
+            throw new Error('Unbekannter Provider');
+        }
+
+        // PlantUML laden und anzeigen
+        async function loadPlantUML(plantumlCode) {
+            try {
+                currentPlantUMLCode = plantumlCode;
+                
+                // Code in Editor anzeigen
+                document.getElementById('code-editor').value = plantumlCode;
+                
+                // URL für PlantUML Server generieren
+                const diagramUrl = plantumlToUrl(plantumlCode);
+                if (!diagramUrl) {
+                    throw new Error('Fehler beim Generieren der Diagramm-URL');
+                }
+                
+                currentDiagramUrl = diagramUrl;
+                
+                // Bild laden
+                const img = document.getElementById('diagram-image');
+                img.onload = function() {
+                    img.style.display = 'block';
+                    document.getElementById('welcomeMessage').style.display = 'none';
+                };
+                img.onerror = function() {
+                    throw new Error('Diagramm konnte nicht geladen werden');
+                };
+                img.src = diagramUrl;
+                
+            } catch (error) {
+                console.error('Fehler beim Laden des PlantUML:', error);
+                showMessage('Fehler beim Anzeigen des Diagramms: ' + error.message, 'error');
+            }
+        }
+
+        // Nachrichten anzeigen
+        function showMessage(message, type = 'error') {
+            const messageContainer = document.getElementById('messageContainer');
+            const className = type === 'error' ? 'error' : 'success';
+            messageContainer.innerHTML = `<div class="${className}">${message}</div>`;
+        }
+
+        // Nachrichten löschen
+        function clearMessages() {
+            document.getElementById('messageContainer').innerHTML = '';
+        }
+
+        // Loading anzeigen/verstecken
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // Hauptfunktion zum Generieren
+        async function generateDiagram() {
+            const description = document.getElementById('systemDescription').value;
+            const diagramType = document.getElementById('diagramType').value;
+            const provider = document.getElementById('aiProvider').value;
+            const apiKey = document.getElementById('apiKey').value;
+            
+            // Validierung
+            if (provider !== 'demo' && !description.trim()) {
+                showMessage('Bitte gib eine System-/Prozessbeschreibung ein.', 'error');
+                return;
+            }
+            
+            if (provider === 'mistral' && !apiKey.trim()) {
+                showMessage('Bitte gib deinen Mistral AI API-Key ein.', 'error');
+                return;
+            }
+            
+            clearMessages();
+            showLoading(true);
+            
+            try {
+                const plantumlCode = await callAI(provider, description, diagramType, apiKey);
+                await loadPlantUML(plantumlCode);
+                showMessage('PlantUML-Diagramm erfolgreich generiert!', 'success');
+            } catch (error) {
+                console.error('Fehler:', error);
+                showMessage('Fehler beim Generieren des Diagramms: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Download-Funktionen
+        function downloadPNG() {
+            if (!currentDiagramUrl) {
+                showMessage('Kein Diagramm zum Download verfügbar.', 'error');
+                return;
+            }
+            
+            const pngUrl = currentDiagramUrl.replace('/svg/', '/png/');
+            const a = document.createElement('a');
+            a.href = pngUrl;
+            a.download = 'plantuml-diagram.png';
+            a.click();
+        }
+
+        function downloadSVG() {
+            if (!currentDiagramUrl) {
+                showMessage('Kein Diagramm zum Download verfügbar.', 'error');
+                return;
+            }
+            
+            fetch(currentDiagramUrl)
+                .then(response => response.text())
+                .then(svgContent => {
+                    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'plantuml-diagram.svg';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+        }
+
+        function downloadCode() {
+            if (!currentPlantUMLCode) {
+                showMessage('Kein PlantUML-Code zum Download verfügbar.', 'error');
+                return;
+            }
+            
+            const blob = new Blob([currentPlantUMLCode], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'diagram.puml';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyToClipboard() {
+            if (!currentPlantUMLCode) {
+                showMessage('Kein PlantUML-Code zum Kopieren verfügbar.', 'error');
+                return;
+            }
+            
+            navigator.clipboard.writeText(currentPlantUMLCode).then(() => {
+                showMessage('PlantUML-Code in Zwischenablage kopiert!', 'success');
+            }).catch(() => {
+                showMessage('Fehler beim Kopieren in die Zwischenablage.', 'error');
+            });
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('generateBtn').addEventListener('click', generateDiagram);
+            
+            // Enter-Taste in Textarea
+            document.getElementById('systemDescription').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    generateDiagram();
+                }
+            });
+
+            // Initial Setup
+            toggleApiKeyInput();
+            updatePlaceholder();
+        });
+    </script>
+</body>
+</html>
